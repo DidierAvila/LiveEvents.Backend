@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/.template.config/">
+    <File Path="template.json" />
+  </Folder>
+  <Project Path="src/LiveEvents.Api.Authentication.Application/LiveEvents.Api.Authentication.Application.csproj" />
+  <Project Path="src/LiveEvents.Api.Authentication/LiveEvents.Api.Authentication.csproj" />
+  <Project Path="src/LiveEvents.Api.Common/LiveEvents.Api.Common.csproj" />
+  <Project Path="src/LiveEvents.Api.Domain/LiveEvents.Api.Domain.csproj" />
+  <Project Path="src/LiveEvents.Api.Infrastructure/LiveEvents.Api.Infrastructure.csproj" />
+  <Project Path="src/LiveEvents.Api.Notification.Application/LiveEvents.Api.Notification.Application.csproj" />
+  <Project Path="src/LiveEvents.Api.Notification/LiveEvents.Api.Notification.csproj" />
+</Solution>

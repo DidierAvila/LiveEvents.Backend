@@ -1,0 +1,23 @@
+@LiveEvents.Api.Notification_HostAddress = http://localhost:5163
+
+POST {{LiveEvents.Api.Notification_HostAddress}}/Api/Notifications/in-app
+Content-Type: application/json
+
+{
+  "userId": "00000000-0000-0000-0000-000000000001",
+  "title": "Bienvenido",
+  "message": "Esta es tu primera notificacion InApp",
+  "type": 1
+}
+
+###
+
+GET {{LiveEvents.Api.Notification_HostAddress}}/Api/Notifications/users/00000000-0000-0000-0000-000000000001
+Accept: application/json
+
+###
+
+GET {{LiveEvents.Api.Notification_HostAddress}}/Api/Notifications/users/00000000-0000-0000-0000-000000000001/unread-count
+Accept: application/json
+
+###
