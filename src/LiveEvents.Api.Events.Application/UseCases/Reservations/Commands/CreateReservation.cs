@@ -64,7 +64,7 @@ public class CreateReservation
 
         if (eventEntity.TicketPrice > 100 && createReservationDto.Quantity > 10)
         {
-            return Result.Failure<ReservationDto>(Error.Validation("Reservation.MaxTenEntries", "Los eventos con precio mayor a 100 permiten maximo 10 entradas por transaccion."));
+            return Result.Failure<ReservationDto>(Error.Validation("Reservation.MaxTenEntries", "Los eventos con precio mayor a $100 permiten maximo 10 entradas por transaccion."));
         }
 
         var unavailableSeats = await _reservationRepository.GetUnavailableSeatsForEventAsync(eventEntity.Id, cancellationToken);
