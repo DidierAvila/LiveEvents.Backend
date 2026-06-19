@@ -22,8 +22,8 @@ public sealed class InAppNotificationChannelHandler(IRepositoryBase<UserNotifica
             Title = request.Title,
             Message = request.Message,
             Channel = request.Channel,
-            Type = request.Type,
-            Status = NotificationStatus.Sent,
+            Types = request.Types,
+            Status = NotificationStatus.Enviado,
             Metadata = request.Metadata is null ? null : JsonSerializer.Serialize(request.Metadata),
             CreatedAt = now,
             UpdatedAt = now

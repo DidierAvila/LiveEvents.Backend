@@ -31,10 +31,10 @@ public sealed class MarkNotificationAsRead(
                 Error.NotFound("Notification.NotFound", "La notificación no existe para el usuario indicado."));
         }
 
-        if (notification.Status != NotificationStatus.Read)
+        if (notification.Status != NotificationStatus.Leido)
         {
             var now = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
-            notification.Status = NotificationStatus.Read;
+            notification.Status = NotificationStatus.Leido;
             notification.ReadAt = now;
             notification.UpdatedAt = now;
 
@@ -48,7 +48,7 @@ public sealed class MarkNotificationAsRead(
             Title = notification.Title,
             Message = notification.Message,
             Channel = notification.Channel,
-            Type = notification.Type,
+            Type = notification.Types,
             Status = notification.Status,
             CreatedAt = notification.CreatedAt,
             ReadAt = notification.ReadAt,

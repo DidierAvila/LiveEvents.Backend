@@ -40,19 +40,19 @@ public sealed class UserNotificationRepository(LiveEventsDbContext context)
             .CountAsync(
                 x => x.UserId == userId &&
                      x.DeletedAt == null &&
-                     x.Status != NotificationStatus.Read,
+                     x.Status != NotificationStatus.Leido,
                 cancellationToken);
     }
 
     public async Task<int> MarkAllAsReadAsync(Guid userId, DateTime readAt, CancellationToken cancellationToken)
     {
         var notifications = await _context.UserNotifications
-            .Where(x => x.UserId == userId && x.DeletedAt == null && x.Status != NotificationStatus.Read)
+            .Where(x => x.UserId == userId && x.DeletedAt == null && x.Status != NotificationStatus.Leido)
             .ToListAsync(cancellationToken);
 
         foreach (var notification in notifications)
         {
-            notification.Status = NotificationStatus.Read;
+            notification.Status = NotificationStatus.Leido;
             notification.ReadAt = readAt;
             notification.UpdatedAt = readAt;
         }

@@ -15,8 +15,8 @@ public class UserNotification : BaseEntity
     public required string Message { get; set; }
 
     public NotificationChannel Channel { get; set; } = NotificationChannel.InApp;
-    public NotificationType Type { get; set; } = NotificationType.Generic;
-    public NotificationStatus Status { get; set; } = NotificationStatus.Pending;
+    public NotificationType Types { get; set; } = NotificationType.Generico;
+    public NotificationStatus Status { get; set; } = NotificationStatus.Pendiente;
     public string? Metadata { get; set; }
     public DateTime? ReadAt { get; set; }
 }

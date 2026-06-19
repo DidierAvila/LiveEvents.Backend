@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using LiveEvents.Api.Domain.Entities.Authentication;
+using LiveEvents.Api.Domain.Entities.Events;
 using LiveEvents.Api.Domain.Entities.Notification;
 
 namespace LiveEvents.Api.Infrastructure.DbContexts;
@@ -19,11 +20,17 @@ public class LiveEventsDbContext : DbContext
     public virtual DbSet<UserRole> UserRoles { get; set; }
     public virtual DbSet<UserType> UserTypes { get; set; }
     public virtual DbSet<UserNotification> UserNotifications { get; set; }
+    public virtual DbSet<Venue> Venues { get; set; }
+    public virtual DbSet<Event> Events { get; set; }
+    public virtual DbSet<Reservation> Reservations { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Declarar enums de PostgreSQL en el esquema authentication
         modelBuilder.HasPostgresEnum<UserStatus>("authentication", "user_status");
+        modelBuilder.HasPostgresEnum<EventType>("events", "events_types");
+        modelBuilder.HasPostgresEnum<EventStatus>("events", "events_status");
+        modelBuilder.HasPostgresEnum<ReservationStatus>("events", "reservations_status");
 
         modelBuilder.Entity<Permission>(entity =>
         {
@@ -284,6 +291,145 @@ public class LiveEventsDbContext : DbContext
                 .HasColumnName("UpdatedAt");
         });
 
+        modelBuilder.Entity<Venue>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("Venues_pkey");
+
+            entity.ToTable("venues", "events");
+
+            entity.HasIndex(e => e.Name, "UQ_Venues_Name").IsUnique();
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("gen_random_uuid()")
+                .HasColumnName("id");
+            entity.Property(e => e.Name)
+                .HasMaxLength(150)
+                .HasColumnName("name");
+            entity.Property(e => e.Capacity)
+                .HasColumnName("capacity");
+            entity.Property(e => e.City)
+                .HasMaxLength(100)
+                .HasColumnName("city");
+            entity.Property(e => e.Status)
+                .HasDefaultValue(true)
+                .HasColumnName("status");
+            entity.Property(e => e.CreatedAt)
+                .HasColumnType("timestamp without time zone")
+                .HasDefaultValueSql("now()")
+                .HasColumnName("created_at");
+            entity.Property(e => e.UpdatedAt)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("updated_at");
+            entity.Property(e => e.DeletedAt)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("deleted_at");
+        });
+
+        modelBuilder.Entity<Event>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("Events_pkey");
+
+            entity.ToTable("events", "events");
+
+            entity.HasIndex(e => new { e.VenueId, e.StartsAt }, "IX_Events_Venue_Start");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("gen_random_uuid()")
+                .HasColumnName("id");
+            entity.Property(e => e.Title)
+                .HasMaxLength(100)
+                .HasColumnName("title");
+            entity.Property(e => e.Description)
+                .HasMaxLength(500)
+                .HasColumnName("description");
+            entity.Property(e => e.VenueId)
+                .HasColumnName("venue_id");
+            entity.Property(e => e.MaxCapacity)
+                .HasColumnName("max_capacity");
+            entity.Property(e => e.StartsAt)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("starts_at");
+            entity.Property(e => e.EndsAt)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("ends_at");
+            entity.Property(e => e.TicketPrice)
+                .HasColumnType("numeric(10,2)")
+                .HasColumnName("ticket_price");
+            entity.Property(e => e.Type)
+                .HasColumnType("events.events_types")
+                .HasColumnName("type");
+            entity.Property(e => e.Status)
+                .HasColumnType("events.events_status")
+                .HasColumnName("status");
+            entity.Property(e => e.CreatedAt)
+                .HasColumnType("timestamp without time zone")
+                .HasDefaultValueSql("now()")
+                .HasColumnName("created_at");
+            entity.Property(e => e.UpdatedAt)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("updated_at");
+            entity.Property(e => e.DeletedAt)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("deleted_at");
+
+            entity.HasOne(d => d.Venue)
+                .WithMany(p => p.Events)
+                .HasForeignKey(d => d.VenueId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("Events_VenueId_fkey");
+        });
+
+        modelBuilder.Entity<Reservation>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("Reservations_pkey");
+
+            entity.ToTable("reservations", "events");
+
+            entity.HasIndex(e => e.ReservationCode, "UQ_Reservations_Code").IsUnique();
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("gen_random_uuid()")
+                .HasColumnName("id");
+            entity.Property(e => e.EventId)
+                .HasColumnName("event_id");
+            entity.Property(e => e.Quantity)
+                .HasColumnName("quantity");
+            entity.Property(e => e.BuyerName)
+                .HasMaxLength(150)
+                .HasColumnName("buyer_name");
+            entity.Property(e => e.BuyerEmail)
+                .HasMaxLength(255)
+                .HasColumnName("buyer_email");
+            entity.Property(e => e.Status)
+                .HasColumnType("events.reservations_status")
+                .HasColumnName("status");
+            entity.Property(e => e.ReservationCode)
+                .HasMaxLength(20)
+                .HasColumnName("reservation_code");
+            entity.Property(e => e.PaidAt)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("paid_at");
+            entity.Property(e => e.CancelledAt)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("cancelled_at");
+            entity.Property(e => e.CreatedAt)
+                .HasColumnType("timestamp without time zone")
+                .HasDefaultValueSql("now()")
+                .HasColumnName("created_at");
+            entity.Property(e => e.UpdatedAt)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("updated_at");
+            entity.Property(e => e.DeletedAt)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("deleted_at");
+
+            entity.HasOne(d => d.Event)
+                .WithMany(p => p.Reservations)
+                .HasForeignKey(d => d.EventId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("Reservations_EventId_fkey");
+        });
+
         modelBuilder.Entity<UserNotification>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("UserNotifications_pkey");
@@ -304,9 +450,9 @@ public class LiveEventsDbContext : DbContext
             entity.Property(e => e.Channel)
                 .HasConversion<int>()
                 .HasColumnName("channel");
-            entity.Property(e => e.Type)
+            entity.Property(e => e.Types)
                 .HasConversion<int>()
-                .HasColumnName("type");
+                .HasColumnName("types");
             entity.Property(e => e.Status)
                 .HasConversion<int>()
                 .HasColumnName("status");

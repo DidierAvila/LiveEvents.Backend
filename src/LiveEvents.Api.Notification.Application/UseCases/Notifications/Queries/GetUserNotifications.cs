@@ -26,7 +26,7 @@ public sealed class GetUserNotifications(IUserNotificationRepository userNotific
                 Title = x.Title,
                 Message = x.Message,
                 Channel = x.Channel,
-                Type = x.Type,
+                Type = x.Types,
                 Status = x.Status,
                 CreatedAt = x.CreatedAt,
                 ReadAt = x.ReadAt,

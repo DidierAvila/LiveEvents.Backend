@@ -51,7 +51,7 @@ public sealed class CreateInAppNotification(
                     UserId = request.UserId,
                     Title = request.Title.Trim(),
                     Message = request.Message.Trim(),
-                    Type = request.Type,
+                    Types = request.Type,
                     Channel = NotificationChannel.InApp,
                     Metadata = request.Metadata
                 },
@@ -75,7 +75,7 @@ public sealed class CreateInAppNotification(
             Title = notification.Title,
             Message = notification.Message,
             Channel = notification.Channel,
-            Type = notification.Type,
+            Type = notification.Types,
             Status = notification.Status,
             CreatedAt = notification.CreatedAt,
             ReadAt = notification.ReadAt,

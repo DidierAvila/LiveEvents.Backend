@@ -10,7 +10,7 @@ public static class CorsExtensions
     public static IServiceCollection AddFrontendCors(this IServiceCollection services, IConfiguration configuration)
     {
         var allowedOrigins = configuration.GetSection("CorsSettings:AllowedOrigins").Get<string[]>()
-                             ?? new[] { "http://localhost:3001" };
+                             ?? new[] { "http://localhost:4200" };
 
         services.AddCors(options =>
         {
