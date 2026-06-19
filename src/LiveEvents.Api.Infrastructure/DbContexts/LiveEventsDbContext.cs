@@ -194,7 +194,7 @@ public class LiveEventsDbContext : DbContext
 
             entity.Property(e => e.Status)
                 .HasColumnName("status")
-                .HasColumnType("user_status");
+                .HasColumnType("authentication.user_status");
 
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("timestamp without time zone")
