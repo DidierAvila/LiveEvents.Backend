@@ -41,6 +41,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseGlobalExceptionHandling();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

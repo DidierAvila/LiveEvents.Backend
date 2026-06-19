@@ -1,5 +1,8 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using LiveEvents.Api.Common.Controllers;
+using LiveEvents.Api.Common.Errors;
+using LiveEvents.Api.Common.Utils;
 using LiveEvents.Api.Notification.Application.UseCases.Notifications.Commands;
 using LiveEvents.Api.Notification.Application.UseCases.Notifications.Dtos;
 using LiveEvents.Api.Notification.Application.UseCases.Notifications.Queries;
@@ -7,6 +10,7 @@ using LiveEvents.Api.Notification.Application.UseCases.Notifications.Queries;
 namespace LiveEvents.Api.Notification.Controllers;
 
 [Route("Api/[controller]")]
+[Authorize]
 public class NotificationsController(
     CreateInAppNotification createInAppNotification,
     GetUserNotifications getUserNotifications,
@@ -27,35 +31,77 @@ public class NotificationsController(
     {
         var result = await _createInAppNotification.HandleAsync(request, cancellationToken);
         return result.IsSuccess
-            ? CreatedAtAction(nameof(GetByUser), new { userId = result.Value.UserId }, result.Value)
+            ? Created(string.Empty, result.Value)
             : HandleError(result.Error);
     }
 
-    [HttpGet("users/{userId:guid}")]
-    public async Task<IActionResult> GetByUser(Guid userId, CancellationToken cancellationToken)
+    [HttpGet("mine")]
+    public async Task<IActionResult> GetMine(CancellationToken cancellationToken)
     {
+        var userIdResult = GetAuthenticatedUserId();
+        if (userIdResult.IsFailure)
+        {
+            return HandleError(userIdResult.Error);
+        }
+
+        var userId = userIdResult.Value;
         var result = await _getUserNotifications.HandleAsync(userId, cancellationToken);
         return HandleResult(result);
     }
 
-    [HttpGet("users/{userId:guid}/unread-count")]
-    public async Task<IActionResult> GetUnreadCount(Guid userId, CancellationToken cancellationToken)
+    [HttpGet("mine/unread-count")]
+    public async Task<IActionResult> GetUnreadCount(CancellationToken cancellationToken)
     {
+        var userIdResult = GetAuthenticatedUserId();
+        if (userIdResult.IsFailure)
+        {
+            return HandleError(userIdResult.Error);
+        }
+
+        var userId = userIdResult.Value;
         var result = await _getUnreadNotificationsCount.HandleAsync(userId, cancellationToken);
         return HandleResult(result);
     }
 
-    [HttpPut("{notificationId:guid}/users/{userId:guid}/read")]
-    public async Task<IActionResult> MarkAsRead(Guid notificationId, Guid userId, CancellationToken cancellationToken)
+    [HttpPut("{notificationId:guid}/read")]
+    public async Task<IActionResult> MarkAsRead(Guid notificationId, CancellationToken cancellationToken)
     {
+        var userIdResult = GetAuthenticatedUserId();
+        if (userIdResult.IsFailure)
+        {
+            return HandleError(userIdResult.Error);
+        }
+
+        var userId = userIdResult.Value;
         var result = await _markNotificationAsRead.HandleAsync(notificationId, userId, cancellationToken);
         return HandleResult(result);
     }
 
-    [HttpPut("users/{userId:guid}/read-all")]
-    public async Task<IActionResult> MarkAllAsRead(Guid userId, CancellationToken cancellationToken)
+    [HttpPut("mine/read-all")]
+    public async Task<IActionResult> MarkAllAsRead(CancellationToken cancellationToken)
     {
+        var userIdResult = GetAuthenticatedUserId();
+        if (userIdResult.IsFailure)
+        {
+            return HandleError(userIdResult.Error);
+        }
+
+        var userId = userIdResult.Value;
         var result = await _markAllNotificationsAsRead.HandleAsync(userId, cancellationToken);
         return HandleResult(result);
+    }
+
+    private Result<Guid> GetAuthenticatedUserId()
+    {
+        var userIdClaim = User.FindFirst(CustomClaimTypes.UserId)?.Value;
+        if (string.IsNullOrWhiteSpace(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Result.Failure<Guid>(
+                Error.Unauthorized(
+                    "Notification.InvalidUser",
+                    "No fue posible identificar al usuario autenticado."));
+        }
+
+        return Result.Success(userId);
     }
 }
