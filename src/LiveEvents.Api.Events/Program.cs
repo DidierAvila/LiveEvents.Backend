@@ -33,10 +33,11 @@ if (app.Environment.IsDevelopment())
         options.WithTitle("Events Manager API")
             .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
     });
+
+    app.UseHttpsRedirection();
 }
 
 app.UseGlobalExceptionHandling();
-app.UseHttpsRedirection();
 app.UseCors(CorsExtensions.AllowFrontendPolicy);
 app.UseAuthentication();
 app.UseAuthorization();

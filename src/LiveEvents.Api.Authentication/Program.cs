@@ -38,10 +38,11 @@ if (app.Environment.IsDevelopment())
         options.WithTitle("Authentication Manager API")
                .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
     });
+
+    app.UseHttpsRedirection();
 }
 
 app.UseGlobalExceptionHandling();
-app.UseHttpsRedirection();
 app.UseCors(CorsExtensions.AllowFrontendPolicy);
 app.UseAuthentication();
 

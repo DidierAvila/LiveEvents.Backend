@@ -35,10 +35,11 @@ if (app.Environment.IsDevelopment())
         options.WithTitle("Notification Manager API")
                .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
     });
+
+    app.UseHttpsRedirection();
 }
 
 app.UseGlobalExceptionHandling();
-app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
