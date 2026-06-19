@@ -49,9 +49,7 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
         context.Response.StatusCode = (int)statusCode;
         context.Response.ContentType = "application/json; charset=utf-8";
 
-        var message = statusCode == HttpStatusCode.InternalServerError
-            ? "Ocurrió un error inesperado."
-            : exception.Message;
+        var message = GetSafeMessage(statusCode);
 
         var payload = new
         {
@@ -126,6 +124,21 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
             TimeoutException => "timeout",
             NotImplementedException => "not_implemented",
             _ => "internal_error"
+        };
+    }
+
+    private static string GetSafeMessage(HttpStatusCode statusCode)
+    {
+        return statusCode switch
+        {
+            HttpStatusCode.BadRequest => "La solicitud no es válida.",
+            HttpStatusCode.Unauthorized => "No estás autorizado para realizar esta acción.",
+            HttpStatusCode.Forbidden => "No tienes permisos para realizar esta acción.",
+            HttpStatusCode.NotFound => "No se encontró el recurso solicitado.",
+            HttpStatusCode.Conflict => "La operación no pudo completarse por un conflicto con el estado actual.",
+            HttpStatusCode.GatewayTimeout => "La operación tardó demasiado tiempo en completarse.",
+            HttpStatusCode.NotImplemented => "La funcionalidad solicitada no está disponible.",
+            _ => "Ocurrió un error inesperado."
         };
     }
 }

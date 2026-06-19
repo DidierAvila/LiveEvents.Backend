@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using LiveEvents.Api.Authentication.Application.UseCases.RolePermissions.Commands;
 using LiveEvents.Api.Authentication.Application.UseCases.RolePermissions.Dtos;
@@ -7,6 +7,7 @@ using LiveEvents.Api.Authentication.Application.UseCases.Roles.Dtos;
 using LiveEvents.Api.Authentication.Application.UseCases.Roles.Handlers;
 using LiveEvents.Api.Authentication.Features.Commands.RolePermissions;
 using LiveEvents.Api.Common.Controllers;
+using LiveEvents.Api.Common.Errors;
 using LiveEvents.Api.Common.PermissionAttribute;
 
 namespace LiveEvents.Api.Authentication.Controllers;
@@ -202,19 +203,8 @@ public class RolesController(
     [RequirePermission("roles.read")]
     public async Task<ActionResult<IEnumerable<RolePermissionDto>>> GetRolePermissions(Guid roleId, CancellationToken cancellationToken)
     {
-        try
-        {
-            var result = await _getPermissionsByRole.HandleAsync(roleId, cancellationToken);
-            return Ok(result);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
-        }
+        var result = await _getPermissionsByRole.HandleAsync(roleId, cancellationToken);
+        return Ok(result);
     }
 
     // POST: api/Roles/{roleId}/permissions/{permissionId}
@@ -223,26 +213,13 @@ public class RolesController(
     /// </summary>
     [HttpPost("{roleId}/permissions/{permissionId}")]
     [RequirePermission("roles.manage")]
-    public async Task<ActionResult<RolePermissionDto>> AssignPermissionToRole(Guid roleId, Guid permissionId, CancellationToken cancellationToken)
+    public async Task<IActionResult> AssignPermissionToRole(Guid roleId, Guid permissionId, CancellationToken cancellationToken)
     {
-        try
-        {
-            var request = new AssignPermissionToRoleDto { RoleId = roleId, PermissionId = permissionId };
-            var result = await _assignPermissionToRole.HandleAsync(request, cancellationToken);
-            return Ok(result);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
-        }
+        var request = new AssignPermissionToRoleDto { RoleId = roleId, PermissionId = permissionId };
+        var result = await _assignPermissionToRole.HandleAsync(request, cancellationToken);
+        return result.IsSuccess
+            ? Ok(result.Value)
+            : HandleError(result.Error);
     }
 
     // POST: api/Roles/{roleId}/permissions/bulk
@@ -297,21 +274,19 @@ public class RolesController(
     /// </summary>
     [HttpDelete("{roleId}/permissions/{permissionId}")]
     [RequirePermission("roles.manage")]
-    public async Task<ActionResult<bool>> RemovePermissionFromRole(Guid roleId, Guid permissionId, CancellationToken cancellationToken)
+    public async Task<IActionResult> RemovePermissionFromRole(Guid roleId, Guid permissionId, CancellationToken cancellationToken)
     {
-        try
+        var result = await _removePermissionFromRole.HandleAsync(roleId, permissionId, cancellationToken);
+        if (result.IsFailure)
         {
-            var result = await _removePermissionFromRole.HandleAsync(roleId, permissionId, cancellationToken);
-            return Ok(new { success = result, message = "Permiso removido del rol correctamente" });
+            return HandleError(result.Error);
         }
-        catch (KeyNotFoundException ex)
+
+        return Ok(new
         {
-            return NotFound(new { message = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
-        }
+            success = true,
+            message = "Permiso removido del rol correctamente"
+        });
     }
 
     /// <summary>

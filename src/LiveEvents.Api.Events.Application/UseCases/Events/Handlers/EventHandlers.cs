@@ -59,17 +59,10 @@ public class EventQueryHandler : IEventQueryHandler
 
     public async Task<Result<EventDto>> GetEventById(Guid id, CancellationToken cancellationToken)
     {
-        try
-        {
-            var eventDto = await _getEventById.HandleAsync(id, cancellationToken);
-            return eventDto is null
-                ? Result.Failure<EventDto>(Error.NotFound("Event.NotFound", $"Evento con ID {id} no encontrado"))
-                : Result.Success(eventDto);
-        }
-        catch (Exception ex)
-        {
-            return Result.Failure<EventDto>(Error.Failure("Event.GetById", ex.Message));
-        }
+        var eventDto = await _getEventById.HandleAsync(id, cancellationToken);
+        return eventDto is null
+            ? Result.Failure<EventDto>(Error.NotFound("Event.NotFound", $"Evento con ID {id} no encontrado"))
+            : Result.Success(eventDto);
     }
 
     public async Task<Result<PaginationResponseDto<EventListDto>>> GetAllEventsFiltered(EventFilterDto filter, CancellationToken cancellationToken)
@@ -89,41 +82,24 @@ public class EventQueryHandler : IEventQueryHandler
             var events = await _getAllEventsFiltered.HandleAsync(filter, cancellationToken);
             return Result.Success(events);
         }
-        catch (ArgumentException ex)
+        catch (ArgumentException)
         {
-            return Result.Failure<PaginationResponseDto<EventListDto>>(Error.Validation("Event.InvalidFilter", ex.Message));
-        }
-        catch (Exception ex)
-        {
-            return Result.Failure<PaginationResponseDto<EventListDto>>(Error.Failure("Event.GetFiltered", ex.Message));
+            return Result.Failure<PaginationResponseDto<EventListDto>>(
+                Error.Validation("Event.InvalidFilter", "Los filtros de eventos no son validos."));
         }
     }
 
     public async Task<Result<OccupationReportDto>> GetOccupationReport(Guid eventId, CancellationToken cancellationToken)
     {
-        try
-        {
-            var report = await _getOccupationReport.HandleAsync(eventId, cancellationToken);
-            return report is null
-                ? Result.Failure<OccupationReportDto>(Error.NotFound("Event.NotFound", $"Evento con ID {eventId} no encontrado"))
-                : Result.Success(report);
-        }
-        catch (Exception ex)
-        {
-            return Result.Failure<OccupationReportDto>(Error.Failure("Event.GetOccupationReport", ex.Message));
-        }
+        var report = await _getOccupationReport.HandleAsync(eventId, cancellationToken);
+        return report is null
+            ? Result.Failure<OccupationReportDto>(Error.NotFound("Event.NotFound", $"Evento con ID {eventId} no encontrado"))
+            : Result.Success(report);
     }
 
     public async Task<Result<IEnumerable<EventDropdownDto>>> GetEventsForDropdown(CancellationToken cancellationToken)
     {
-        try
-        {
-            var events = await _getEventsForDropdown.HandleAsync(cancellationToken);
-            return Result.Success(events);
-        }
-        catch (Exception ex)
-        {
-            return Result.Failure<IEnumerable<EventDropdownDto>>(Error.Failure("Event.GetDropdown", ex.Message));
-        }
+        var events = await _getEventsForDropdown.HandleAsync(cancellationToken);
+        return Result.Success(events);
     }
 }

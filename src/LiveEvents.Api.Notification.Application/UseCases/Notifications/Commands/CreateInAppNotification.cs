@@ -59,10 +59,10 @@ public sealed class CreateInAppNotification(
 
             return Result.Success(Map(notification));
         }
-        catch (NotSupportedException ex)
+        catch (NotSupportedException)
         {
             return Result.Failure<UserNotificationDto>(
-                Error.Failure("Notification.ChannelNotSupported", ex.Message));
+                Error.Failure("Notification.ChannelNotSupported", "El canal de notificación solicitado no es compatible."));
         }
     }
 

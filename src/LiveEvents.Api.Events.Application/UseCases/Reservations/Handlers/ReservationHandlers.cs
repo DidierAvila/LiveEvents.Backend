@@ -88,13 +88,10 @@ public class ReservationQueryHandler : IReservationQueryHandler
             var reservations = await _getMyReservationsFiltered.HandleAsync(buyerEmail, filter, cancellationToken);
             return Result.Success(reservations);
         }
-        catch (ArgumentException ex)
+        catch (ArgumentException)
         {
-            return Result.Failure<PaginationResponseDto<UserReservationListDto>>(Error.Validation("Reservation.InvalidFilter", ex.Message));
-        }
-        catch (Exception ex)
-        {
-            return Result.Failure<PaginationResponseDto<UserReservationListDto>>(Error.Failure("Reservation.GetMine", ex.Message));
+            return Result.Failure<PaginationResponseDto<UserReservationListDto>>(
+                Error.Validation("Reservation.InvalidFilter", "Los filtros de reservas no son validos."));
         }
     }
 }

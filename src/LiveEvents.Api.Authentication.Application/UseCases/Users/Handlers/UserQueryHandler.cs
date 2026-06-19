@@ -33,45 +33,25 @@ public class UserQueryHandler : IUserQueryHandler
 
     public async Task<Result<UserDto>> GetUserById(Guid id, CancellationToken cancellationToken)
     {
-        try
+        var user = await _getUserById.HandleAsync(id, cancellationToken);
+        if (user == null)
         {
-            var user = await _getUserById.HandleAsync(id, cancellationToken);
-            if (user == null)
-            {
-                return Result.Failure<UserDto>(Error.NotFound("User.NotFound", $"Usuario con ID {id} no encontrado"));
-            }
-            return Result.Success(user);
+            return Result.Failure<UserDto>(Error.NotFound("User.NotFound", $"Usuario con ID {id} no encontrado"));
         }
-        catch (Exception ex)
-        {
-            return Result.Failure<UserDto>(Error.Failure("User.GetById", ex.Message));
-        }
+
+        return Result.Success(user);
     }
 
     public async Task<Result<IEnumerable<UserDto>>> GetAllUsers(CancellationToken cancellationToken)
     {
-        try
-        {
-            var users = await _getAllUsers.HandleAsync(cancellationToken);
-            return Result.Success(users);
-        }
-        catch (Exception ex)
-        {
-            return Result.Failure<IEnumerable<UserDto>>(Error.Failure("User.GetAll", ex.Message));
-        }
+        var users = await _getAllUsers.HandleAsync(cancellationToken);
+        return Result.Success(users);
     }
 
     public async Task<Result<IEnumerable<UserBasicDto>>> GetAllUsersBasic(CancellationToken cancellationToken)
     {
-        try
-        {
-            var users = await _getAllUsersBasic.HandleAsync(cancellationToken);
-            return Result.Success(users);
-        }
-        catch (Exception ex)
-        {
-            return Result.Failure<IEnumerable<UserBasicDto>>(Error.Failure("User.GetAllBasic", ex.Message));
-        }
+        var users = await _getAllUsersBasic.HandleAsync(cancellationToken);
+        return Result.Success(users);
     }
 
     public async Task<Result<PaginationResponseDto<UserBasicDto>>> GetAllUsersFiltered(UserFilterDto filter, CancellationToken cancellationToken)
@@ -89,13 +69,10 @@ public class UserQueryHandler : IUserQueryHandler
             var users = await _getAllUsersFiltered.HandleAsync(filter, cancellationToken);
             return Result.Success(users);
         }
-        catch (ArgumentException ex)
+        catch (ArgumentException)
         {
-            return Result.Failure<PaginationResponseDto<UserBasicDto>>(Error.Validation("User.InvalidFilter", ex.Message));
-        }
-        catch (Exception ex)
-        {
-            return Result.Failure<PaginationResponseDto<UserBasicDto>>(Error.Failure("User.GetFiltered", ex.Message));
+            return Result.Failure<PaginationResponseDto<UserBasicDto>>(
+                Error.Validation("User.InvalidFilter", "Los filtros de usuarios no son válidos."));
         }
     }
 

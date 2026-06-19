@@ -36,58 +36,31 @@ public class PermissionQueryHandler : IPermissionQueryHandler
 
     public async Task<Result<PermissionDto>> GetPermissionById(Guid id, CancellationToken cancellationToken)
     {
-        try
+        var permission = await _getPermissionById.HandleAsync(id, cancellationToken);
+        if (permission == null)
         {
-            var permission = await _getPermissionById.HandleAsync(id, cancellationToken);
-            if (permission == null)
-            {
-                return Result.Failure<PermissionDto>(Error.NotFound("Permission.NotFound", $"Permiso con ID {id} no encontrado"));
-            }
-            return Result.Success(permission);
+            return Result.Failure<PermissionDto>(Error.NotFound("Permission.NotFound", $"Permiso con ID {id} no encontrado"));
         }
-        catch (Exception ex)
-        {
-            return Result.Failure<PermissionDto>(Error.Failure("Permission.GetById", ex.Message));
-        }
+
+        return Result.Success(permission);
     }
 
     public async Task<Result<IEnumerable<PermissionDto>>> GetAllPermissions(CancellationToken cancellationToken)
     {
-        try
-        {
-            var permissions = await _getAllPermissions.HandleAsync(cancellationToken);
-            return Result.Success(permissions);
-        }
-        catch (Exception ex)
-        {
-            return Result.Failure<IEnumerable<PermissionDto>>(Error.Failure("Permission.GetAll", ex.Message));
-        }
+        var permissions = await _getAllPermissions.HandleAsync(cancellationToken);
+        return Result.Success(permissions);
     }
 
     public async Task<Result<IEnumerable<PermissionDto>>> GetActivePermissions(CancellationToken cancellationToken)
     {
-        try
-        {
-            var permissions = await _getActivePermissions.HandleAsync(cancellationToken);
-            return Result.Success(permissions);
-        }
-        catch (Exception ex)
-        {
-            return Result.Failure<IEnumerable<PermissionDto>>(Error.Failure("Permission.GetActive", ex.Message));
-        }
+        var permissions = await _getActivePermissions.HandleAsync(cancellationToken);
+        return Result.Success(permissions);
     }
 
     public async Task<Result<IEnumerable<PermissionSummaryDto>>> GetPermissionsSummary(CancellationToken cancellationToken)
     {
-        try
-        {
-            var permissions = await _getPermissionsSummary.HandleAsync(cancellationToken);
-            return Result.Success(permissions);
-        }
-        catch (Exception ex)
-        {
-            return Result.Failure<IEnumerable<PermissionSummaryDto>>(Error.Failure("Permission.GetSummary", ex.Message));
-        }
+        var permissions = await _getPermissionsSummary.HandleAsync(cancellationToken);
+        return Result.Success(permissions);
     }
 
     public async Task<Result<PaginationResponseDto<PermissionListResponseDto>>> GetAllPermissionsFiltered(PermissionFilterDto filter, CancellationToken cancellationToken)
@@ -105,26 +78,16 @@ public class PermissionQueryHandler : IPermissionQueryHandler
             var permissions = await _getAllPermissionsFiltered.GetPermissionsFiltered(filter, cancellationToken);
             return Result.Success(permissions);
         }
-        catch (ArgumentException ex)
+        catch (ArgumentException)
         {
-            return Result.Failure<PaginationResponseDto<PermissionListResponseDto>>(Error.Validation("Permission.InvalidFilter", ex.Message));
-        }
-        catch (Exception ex)
-        {
-            return Result.Failure<PaginationResponseDto<PermissionListResponseDto>>(Error.Failure("Permission.GetFiltered", ex.Message));
+            return Result.Failure<PaginationResponseDto<PermissionListResponseDto>>(
+                Error.Validation("Permission.InvalidFilter", "Los filtros de permisos no son válidos."));
         }
     }
 
     public async Task<Result<IEnumerable<PermissionDropdownDto>>> GetPermissionsForDropdown(CancellationToken cancellationToken)
     {
-        try
-        {
-            var permissions = await _getPermissionsForDropdown.HandleAsync(cancellationToken);
-            return Result.Success(permissions);
-        }
-        catch (Exception ex)
-        {
-            return Result.Failure<IEnumerable<PermissionDropdownDto>>(Error.Failure("Permission.GetDropdown", ex.Message));
-        }
+        var permissions = await _getPermissionsForDropdown.HandleAsync(cancellationToken);
+        return Result.Success(permissions);
     }
 }

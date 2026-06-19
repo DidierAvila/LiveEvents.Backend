@@ -20,14 +20,7 @@ public class VenueQueryHandler : IVenueQueryHandler
 
     public async Task<Result<IEnumerable<VenueDropdownDto>>> GetVenuesForDropdown(CancellationToken cancellationToken)
     {
-        try
-        {
-            var venues = await _getVenuesForDropdown.HandleAsync(cancellationToken);
-            return Result.Success(venues);
-        }
-        catch (Exception ex)
-        {
-            return Result.Failure<IEnumerable<VenueDropdownDto>>(Error.Failure("Venue.GetDropdown", ex.Message));
-        }
+        var venues = await _getVenuesForDropdown.HandleAsync(cancellationToken);
+        return Result.Success(venues);
     }
 }

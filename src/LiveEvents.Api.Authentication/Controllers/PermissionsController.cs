@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using LiveEvents.Api.Authentication.Application.UseCases.Permissions.Dtos;
 using LiveEvents.Api.Authentication.Application.UseCases.Permissions.Handlers;
@@ -176,18 +176,7 @@ public class PermissionsController : ApiControllerBase
     [RequirePermission("permissions.read")]
     public async Task<ActionResult<IEnumerable<RolePermissionDto>>> GetPermissionRoles(Guid permissionId, CancellationToken cancellationToken)
     {
-        try
-        {
-            var result = await _getRolesByPermission.HandleAsync(permissionId, cancellationToken);
-            return Ok(result);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
-        }
+        var result = await _getRolesByPermission.HandleAsync(permissionId, cancellationToken);
+        return Ok(result);
     }
 }

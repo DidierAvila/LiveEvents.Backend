@@ -70,50 +70,43 @@ public class UserCommandHandler : IUserCommandHandler
     /// </summary>
     public async Task<Result<MultipleRoleRemovalResult>> RemoveMultipleRolesFromUser(RemoveMultipleRolesFromUser command, CancellationToken cancellationToken)
     {
-        try
+        var result = new MultipleRoleRemovalResult();
+
+        foreach (var roleId in command.RoleIds)
         {
-            var result = new MultipleRoleRemovalResult();
-
-            foreach (var roleId in command.RoleIds)
+            try
             {
-                try
+                // Verificar si el usuario tiene el rol asignado
+                var hasRole = await _userRoleRepository.UserHasRoleAsync(command.UserId, roleId, cancellationToken);
+                if (!hasRole)
                 {
-                    // Verificar si el usuario tiene el rol asignado
-                    var hasRole = await _userRoleRepository.UserHasRoleAsync(command.UserId, roleId, cancellationToken);
-                    if (!hasRole)
-                    {
-                        result.NotAssignedRoles.Add(roleId);
-                        continue;
-                    }
-
-                    // Remover el rol
-                    var removed = await _userRoleRepository.RemoveRoleFromUserAsync(command.UserId, roleId, cancellationToken);
-                    if (removed)
-                    {
-                        result.RemovedRoles.Add(roleId);
-                    }
-                    else
-                    {
-                        result.FailedRoles.Add($"Failed to remove role {roleId}");
-                    }
+                    result.NotAssignedRoles.Add(roleId);
+                    continue;
                 }
-                catch (Exception ex)
+
+                // Remover el rol
+                var removed = await _userRoleRepository.RemoveRoleFromUserAsync(command.UserId, roleId, cancellationToken);
+                if (removed)
                 {
-                    result.FailedRoles.Add($"Error removing role {roleId}: {ex.Message}");
+                    result.RemovedRoles.Add(roleId);
+                }
+                else
+                {
+                    result.FailedRoles.Add($"No fue posible remover el rol {roleId}.");
                 }
             }
-
-            if (result.RemovedRoles.Any())
+            catch
             {
-                await _securityStampService.RefreshSecurityStampAsync(command.UserId, cancellationToken);
+                result.FailedRoles.Add($"No fue posible remover el rol {roleId}.");
             }
+        }
 
-            return Result.Success(result);
-        }
-        catch (Exception ex)
+        if (result.RemovedRoles.Any())
         {
-            return Result.Failure<MultipleRoleRemovalResult>(Error.Failure("User.RemoveRoles", ex.Message));
+            await _securityStampService.RefreshSecurityStampAsync(command.UserId, cancellationToken);
         }
+
+        return Result.Success(result);
     }
 
     /// <summary>
@@ -121,32 +114,25 @@ public class UserCommandHandler : IUserCommandHandler
     /// </summary>
     public async Task<Result<List<UserRoleDto>>> GetUserRoles(Guid userId, CancellationToken cancellationToken)
     {
-        try
-        {
-            var roles = new List<UserRoleDto>();
-            var userRoles = await _userRoleRepository.GetUserRolesAsync(userId, cancellationToken);
+        var roles = new List<UserRoleDto>();
+        var userRoles = await _userRoleRepository.GetUserRolesAsync(userId, cancellationToken);
 
-            foreach (var userRole in userRoles)
+        foreach (var userRole in userRoles)
+        {
+            var role = await _roleRepository.Find(r => r.Id == userRole.RoleId, cancellationToken);
+            if (role != null && role.Status)
             {
-                var role = await _roleRepository.Find(r => r.Id == userRole.RoleId, cancellationToken);
-                if (role != null && role.Status)
+                roles.Add(new UserRoleDto
                 {
-                    roles.Add(new UserRoleDto
-                    {
-                        Id = role.Id,
-                        Name = role.Name,
-                        Description = role.Description,
-                        Status = role.Status
-                    });
-                }
+                    Id = role.Id,
+                    Name = role.Name,
+                    Description = role.Description,
+                    Status = role.Status
+                });
             }
+        }
 
-            return Result.Success(roles.OrderBy(r => r.Name).ToList());
-        }
-        catch (Exception ex)
-        {
-            return Result.Failure<List<UserRoleDto>>(Error.Failure("User.GetRoles", ex.Message));
-        }
+        return Result.Success(roles.OrderBy(r => r.Name).ToList());
     }
 
     /// <summary>
@@ -154,69 +140,62 @@ public class UserCommandHandler : IUserCommandHandler
     /// </summary>
     public async Task<Result<MultipleRoleAssignmentResult>> AssignMultipleRolesToUser(AssignMultipleRolesToUser command, CancellationToken cancellationToken)
     {
-        try
+        var result = new MultipleRoleAssignmentResult();
+
+        foreach (var roleId in command.RoleIds)
         {
-            var result = new MultipleRoleAssignmentResult();
-
-            foreach (var roleId in command.RoleIds)
+            try
             {
-                try
+                // Verificar si el rol existe y está activo
+                var role = await _roleRepository.Find(r => r.Id == roleId, cancellationToken);
+                if (role == null || !role.Status)
                 {
-                    // Verificar si el rol existe y está activo
-                    var role = await _roleRepository.Find(r => r.Id == roleId, cancellationToken);
-                    if (role == null || !role.Status)
-                    {
-                        result.FailedRoles.Add($"Role {roleId} not found or inactive");
-                        continue;
-                    }
-
-                    // Verificar si ya está asignado
-                    var isAlreadyAssigned = await _userRoleRepository.UserHasRoleAsync(command.UserId, roleId, cancellationToken);
-                    if (isAlreadyAssigned)
-                    {
-                        result.ExistingRoles.Add(new UserRoleDto
-                        {
-                            Id = role.Id,
-                            Name = role.Name,
-                            Description = role.Description,
-                            Status = role.Status
-                        });
-                        continue;
-                    }
-
-                    // Asignar el rol
-                    var assigned = await _userRoleRepository.AssignRoleToUserAsync(command.UserId, roleId, cancellationToken);
-                    if (assigned)
-                    {
-                        result.AssignedRoles.Add(new UserRoleDto
-                        {
-                            Id = role.Id,
-                            Name = role.Name,
-                            Description = role.Description,
-                            Status = role.Status
-                        });
-                    }
-                    else
-                    {
-                        result.FailedRoles.Add($"Failed to assign role {roleId}");
-                    }
+                    result.FailedRoles.Add($"No fue posible asignar el rol {roleId} porque no existe o está inactivo.");
+                    continue;
                 }
-                catch (Exception ex)
+
+                // Verificar si ya está asignado
+                var isAlreadyAssigned = await _userRoleRepository.UserHasRoleAsync(command.UserId, roleId, cancellationToken);
+                if (isAlreadyAssigned)
                 {
-                    result.FailedRoles.Add($"Error assigning role {roleId}: {ex.Message}");
+                    result.ExistingRoles.Add(new UserRoleDto
+                    {
+                        Id = role.Id,
+                        Name = role.Name,
+                        Description = role.Description,
+                        Status = role.Status
+                    });
+                    continue;
+                }
+
+                // Asignar el rol
+                var assigned = await _userRoleRepository.AssignRoleToUserAsync(command.UserId, roleId, cancellationToken);
+                if (assigned)
+                {
+                    result.AssignedRoles.Add(new UserRoleDto
+                    {
+                        Id = role.Id,
+                        Name = role.Name,
+                        Description = role.Description,
+                        Status = role.Status
+                    });
+                }
+                else
+                {
+                    result.FailedRoles.Add($"No fue posible asignar el rol {roleId}.");
                 }
             }
-
-            if (result.AssignedRoles.Any())
+            catch
             {
-                await _securityStampService.RefreshSecurityStampAsync(command.UserId, cancellationToken);
+                result.FailedRoles.Add($"No fue posible asignar el rol {roleId}.");
             }
+        }
 
-            return Result.Success(result);
-        }
-        catch (Exception ex)
+        if (result.AssignedRoles.Any())
         {
-            return Result.Failure<MultipleRoleAssignmentResult>(Error.Failure("User.AssignRoles", ex.Message));
+            await _securityStampService.RefreshSecurityStampAsync(command.UserId, cancellationToken);
         }
+
+        return Result.Success(result);
     }
 }

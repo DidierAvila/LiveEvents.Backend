@@ -110,14 +110,14 @@ public class AssignMultiplePermissionsToRole
                     PermissionName = permissionToAssign.Name
                 });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 var permission = await _permissionRepository.Find(p => p.Id == permissionId, cancellationToken);
                 result.FailedAssignments.Add(new PermissionAssignmentError
                 {
                     PermissionId = permissionId,
                     PermissionName = permission?.Name ?? permissionId.ToString(),
-                    ErrorMessage = ex.Message
+                    ErrorMessage = "No fue posible asignar el permiso."
                 });
             }
         }

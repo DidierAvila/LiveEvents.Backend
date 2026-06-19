@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using LiveEvents.Api.Authentication.Application.UseCases.Users.Dtos;
 using LiveEvents.Api.Authentication.Application.UseCases.Users.Handlers;
@@ -48,49 +48,34 @@ public class AccountController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<UserMeResponseDto>> GetMe(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetMe(CancellationToken cancellationToken)
     {
-        try
+        _logger.LogInformation("GetMe endpoint called");
+
+        var userIdClaim = User.FindFirst(CustomClaimTypes.UserId)?.Value;
+        _logger.LogInformation("User ID claim from token: {UserId}", userIdClaim);
+
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
         {
-            _logger.LogInformation("GetMe endpoint called");
-
-            // Obtener el ID del usuario desde el token JWT
-            var userIdClaim = User.FindFirst(CustomClaimTypes.UserId)?.Value;
-            _logger.LogInformation("User ID claim from token: {UserId}", userIdClaim);
-
-            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
-            {
-                _logger.LogWarning("Invalid or missing user ID in token");
-                return Unauthorized(new { message = "Invalid or missing user ID in token" });
-            }
-
-            _logger.LogInformation("Parsed user ID: {UserId}", userId);
-
-            // Obtener la información del usuario en formato híbrido
-            var userMeHybrid = await _userQueryHandler.GetUserMe(userId, cancellationToken);
-
-            _logger.LogInformation("Successfully retrieved hybrid user info for user ID: {UserId}", userId);
-            return Ok(userMeHybrid);
+            _logger.LogWarning("Invalid or missing user ID in token");
+            return HandleError(LiveEvents.Api.Common.Errors.Error.Unauthorized(
+                "User.InvalidToken",
+                "No fue posible identificar al usuario autenticado."));
         }
-        catch (KeyNotFoundException ex)
+
+        _logger.LogInformation("Parsed user ID: {UserId}", userId);
+
+        var userMeHybrid = await _userQueryHandler.GetUserMe(userId, cancellationToken);
+        if (!userMeHybrid.Success)
         {
-            _logger.LogError(ex, "User not found in database");
-            return NotFound(new
-            {
-                success = false,
-                message = ex.Message
-            });
+            _logger.LogWarning("User not found for GetMe. UserId: {UserId}", userId);
+            return HandleError(LiveEvents.Api.Common.Errors.Error.NotFound(
+                "User.NotFound",
+                "No se encontró el usuario autenticado."));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting user information");
-            return StatusCode(500, new
-            {
-                success = false,
-                message = "Internal server error",
-                error = ex.Message
-            });
-        }
+
+        _logger.LogInformation("Successfully retrieved hybrid user info for user ID: {UserId}", userId);
+        return Ok(userMeHybrid);
     }
 
     /// <summary>
@@ -121,7 +106,9 @@ public class AccountController : ApiControllerBase
         if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
         {
             _logger.LogWarning("Invalid or missing user ID in token");
-            return Unauthorized(new { message = "Invalid or missing user ID in token" });
+            return HandleError(LiveEvents.Api.Common.Errors.Error.Unauthorized(
+                "User.InvalidToken",
+                "No fue posible identificar al usuario autenticado."));
         }
 
         _logger.LogInformation("Parsed user ID: {UserId}", userId);
