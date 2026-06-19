@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
-using LiveEvents.Api.Common.Utils;
 using System.Text;
 
 namespace LiveEvents.Api.Common.Extensions;
@@ -10,6 +9,12 @@ namespace LiveEvents.Api.Common.Extensions;
 public static class JwtAuthenticationExtensionsBase
 {
     public static IServiceCollection AddJwtAuthenticationBase(this IServiceCollection services, IConfiguration configuration)
+        => services.AddJwtAuthenticationBase(configuration, configureJwtBearer: null);
+
+    public static IServiceCollection AddJwtAuthenticationBase(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        Action<JwtBearerOptions>? configureJwtBearer)
     {
         var key = configuration.GetValue<string>("JwtSettings:key");
         var issuer = configuration.GetValue<string>("JwtSettings:Issuer");
@@ -48,23 +53,7 @@ public static class JwtAuthenticationExtensionsBase
                 ClockSkew = TimeSpan.Zero
             };
 
-            options.Events = new JwtBearerEvents
-            {
-                OnTokenValidated = async context =>
-                {
-                    var principal = context.Principal;
-                    var userIdClaim = principal?.FindFirst(CustomClaimTypes.UserId)?.Value;
-                    var securityStampClaim = principal?.FindFirst(CustomClaimTypes.SecurityStamp)?.Value;
-
-                    if (string.IsNullOrWhiteSpace(userIdClaim) ||
-                        string.IsNullOrWhiteSpace(securityStampClaim) ||
-                        !Guid.TryParse(userIdClaim, out var userId))
-                    {
-                        context.Fail("Token inválido");
-                        return;
-                    }
-                }
-            };
+            configureJwtBearer?.Invoke(options);
         });
 
         return services;

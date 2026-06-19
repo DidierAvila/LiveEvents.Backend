@@ -4,7 +4,7 @@ using LiveEvents.Api.Common.Utils;
 using LiveEvents.Api.Domain.Entities.Authentication;
 using LiveEvents.Api.Domain.Ports;
 
-namespace LiveEvents.Api.Authentication.Extensions;
+namespace LiveEvents.Api.Events.Extensions;
 
 public static class JwtAuthenticationExtensions
 {

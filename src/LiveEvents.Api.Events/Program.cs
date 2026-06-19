@@ -1,6 +1,7 @@
 using LiveEvents.Api.Common.Extensions;
 using LiveEvents.Api.Common.Middleware;
 using LiveEvents.Api.Common.Transformers;
+using LiveEvents.Api.Events.Extensions;
 using LiveEvents.Api.Events.Application;
 using Scalar.AspNetCore;
 using System.Text.Json.Serialization;
@@ -21,7 +22,7 @@ builder.Services.AddOpenApi(options =>
 
 builder.Services.AddEventsApplication(builder.Configuration);
 builder.Services.AddFrontendCors(builder.Configuration);
-builder.Services.AddJwtAuthenticationBase(builder.Configuration);
+builder.Services.AddJwtAuthentication(builder.Configuration);
 
 var app = builder.Build();
 

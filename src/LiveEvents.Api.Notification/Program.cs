@@ -1,7 +1,7 @@
 using LiveEvents.Api.Notification.Application;
 using LiveEvents.Api.Common.Transformers;
 using LiveEvents.Api.Common.Middleware;
-using LiveEvents.Api.Common.Extensions;
+using LiveEvents.Api.Notification.Extensions;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,7 +21,7 @@ builder.Services.AddOpenApi(options =>
 
 // Configure extensions Application
 builder.Services.AddNotificationApplication(builder.Configuration);
-builder.Services.AddJwtAuthenticationBase(builder.Configuration);
+builder.Services.AddJwtAuthentication(builder.Configuration);
 
 var app = builder.Build();
 
